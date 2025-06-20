@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Daftar Produk</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+    h2 {
+      margin-top: 40px;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #eaeaea;
+    }
+    .loading {
+      font-style: italic;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1>Produk</h1>
+  <div id="content">
+    <p class="loading">Memuat data…</p>
+  </div>
+
+  <script>
+    // URL JSON produk
+    const DATA_URL = "https://raw.githubusercontent.com/sathya01lllll/list-produk-/main/produk.json";
+
+    function formatRupiah(num) {
+      return 'Rp ' + num.toLocaleString('id-ID', { minimumFractionDigits: 0 });
+    }
+
+    fetch(DATA_URL)
+      .then(res => res.json())
+      .then(data => {
+        const content = document.getElementById('content');
+        content.innerHTML = ''; // clear loading
+        // Kelompokkan berdasarkan kategori
+        const groups = data.reduce((acc, item) => {
+          const cat = item.kategori || 'Lain-lain';
+          if (!acc[cat]) acc[cat] = [];
+          acc[cat].push(item);
+          return acc;
+        }, {});
+
+        for (let kategori in groups) {
+          const arr = groups[kategori];
+          const section = document.createElement('section');
+          section.innerHTML = `<h2>${kategori} (${arr.length})</h2>`;
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          thead.innerHTML = `
+            <tr>
+              <th>Produk</th>
+              <th>Keterangan</th>
+              <th>Harga</th>
+              <th>+ Pajak 12%</th>
+            </tr>`;
+          table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+
+          arr.forEach(item => {
+            const harga = parseFloat(item.harga) || 0;
+            const plusPajak = Math.round(harga * 1.12);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${item.produk}</td>
+              <td>${item.keterangan || ''}</td>
+              <td>${formatRupiah(harga)}</td>
+              <td>${formatRupiah(plusPajak)}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+
+          table.appendChild(tbody);
+          section.appendChild(table);
+          content.appendChild(section);
+        }
+      })
+      .catch(err => {
+        document.getElementById('content').innerHTML = `<p style="color: red;">Gagal memuat data: ${err.message}</p>`;
+      });
+  </script>
+</body>
+</html>
